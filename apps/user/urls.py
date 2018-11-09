@@ -1,6 +1,7 @@
 
 from django.conf.urls import url
+from apps.user import views
 
 urlpatterns = [
-    # url(r'^admin/', ),
+    url(r'^register/', views.register),  #注册页面
 ]
