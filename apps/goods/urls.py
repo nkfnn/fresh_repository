@@ -1,6 +1,7 @@
 
 from django.conf.urls import url
+from apps.goods import views
 
 urlpatterns = [
-    # url(r'^admin/', ),
+    url(r'^$', views.index,name='index'),
 ]
