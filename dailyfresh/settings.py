@@ -37,6 +37,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'haystack', # 全文搜索引擎
     'tinymce',  # 富文本编辑器
     'apps.cart',
     'apps.goods',
@@ -87,7 +88,7 @@ DATABASES = {
         # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         'USER':'root',
         'PASSWORD':'mysql',
-        'HOST':'localhost',
+        'HOST':'192.168.2.102',
         'PORT':3306
     }
 }
@@ -147,3 +148,28 @@ CACHES = {
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
+
+# 若未登录，跳转路径
+LOGIN_URL='/user/login/'
+
+# 设置django的文件存储类
+DEFAULT_FILE_STORAGE = 'utils.fdfs.storage.FDFSStorage'
+
+# 配置fastdfs的client.conf路径
+FAST_CLINET_CONF = './utils/fdfs/client.conf'
+
+# 配置fastdfs服务器上nginx的ip和端口号
+FAST_URL = 'http://192.168.2.102:8888/'
+
+#全文搜索框架配置
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        #使用whoosh引擎
+        'ENGINE': 'haystack.backends.whoosh_cn_backend.WhooshEngine',
+        #索引文件路径
+        'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+    }
+}
+
+#当添加、修改、删除数据时，自动生成索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
