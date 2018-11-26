@@ -10,9 +10,11 @@ from celery_tasks.tasks import send_register_active_email
 from django.core.mail import send_mail
 from dailyfresh import settings
 from django.contrib.auth import authenticate,login,logout
+from django.core.paginator import Paginator
 from itsdangerous import SignatureExpired
 from utils.mixin import LoginRequiredMixin
 from django_redis import get_redis_connection
+from apps.order.models import OrderInfo,OrderGoods
 import re
 
 # /user/register  显示注册页面
@@ -200,8 +202,58 @@ class UserInfoView(LoginRequiredMixin,View):
 
 # /user/order/
 class UserOrderView(LoginRequiredMixin,View):
-    def get(self,request):
-        return render(request,'user_center_order.html',{'page':'order'})
+    def get(self,request,page):
+
+        # 校验数据
+        # 查询订单
+        user = request.user
+        orders = OrderInfo.objects.filter(user = user).order_by('-create_time')
+
+        # 查询订单商品信息
+        for order in orders:
+            order_skus = OrderGoods.objects.filter(order=order)
+            # print('--------->:',len(order_skus))
+            for order_sku in order_skus:
+                # 计算商品小计
+                order_sku.amount = order_sku.count * order_sku.price
+            # 为order增加商品属性
+            order.order_skus = order_skus
+            # 为order增加支付状态名称属性
+            order.status_name = OrderInfo.ORDER_STATUS[order.order_status]
+
+        paginator = Paginator(orders,2)
+
+        # 验证传来的数据page
+        try:
+            page = int(page)
+        except Exception as e:
+            page = 1
+
+        if page > paginator.num_pages:
+            page = 1
+
+        # 创建page页的page实例对象
+        order_page = paginator.page(page)
+        num_pages = paginator.num_pages
+        # 开始控制页码
+        if num_pages < 5:
+            pages = range(1,num_pages)
+        elif page <3 :
+            pages = range(1,6)
+        elif num_pages-page <= 2:
+            pages = range(num_pages-4,num_pages+1)
+        else:
+            pages = range(page-2,page+3)
+
+        content ={
+            'order_page':order_page,
+            'pages':pages,
+            'page': 'order'
+        }
+
+
+
+        return render(request,'user_center_order.html',content)
 
 # /user/address/
 class AddressView(LoginRequiredMixin,View):
